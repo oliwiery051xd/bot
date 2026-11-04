@@ -1,0 +1,15 @@
+services:
+  bot:
+    build: .
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL_DOCKER:-sqlite+aiosqlite:////data/monstal.db}
+      DEMO_MODE: ${DEMO_MODE:-false}
+    volumes:
+      - giftzone_data:/data
+    restart: unless-stopped
+    stop_grace_period: 30s
+
+volumes:
+  giftzone_data:
