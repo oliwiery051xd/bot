@@ -407,7 +407,7 @@ def create_admin_router(service, settings) -> Router:
             if demo:
                 details = f'Tryb: DEMO\nBonus polecenia: {money(settings.referral_bonus_grosze)}'
             else:
-                configured = ', '.join(o['code'] for o in service.crypto_options() if o['configured']) or 'brak'
+                configured = ', '.join(o['code'] for o in service.crypto_options() if o['configured'] and not o.get('contact_only')) or 'brak'
                 contact = '@' + settings.merchant_telegram_username if settings.merchant_telegram_username else 'nie ustawiono'
                 details = f'Tryb: rzeczywiste salda, ręczne wpłaty\nKontakt BLIK: {safe(contact)}\nKrypto z adresem: {safe(configured)}\nPremie pieniężne za polecenia: wyłączone'
                 details += '\n\n' + await rate_details()

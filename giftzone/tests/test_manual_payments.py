@@ -252,6 +252,14 @@ async def test_real_ui_blik_contact_and_confirmed_manual_credit(real_shop):
         await bot.session.close()
 
 
+
+@pytest.mark.parametrize("asset", ["LTC", "XMR"])
+async def test_ltc_and_xmr_real_deposits_require_private_contact(real_shop, asset):
+    with pytest.raises(DomainError, match="prywatnie"):
+        await real_shop.create_topup(ALICE, 1000, "crypto", f"private-contact-{asset}", asset=asset)
+    assert await real_shop.topups(ALICE) == []
+
+
 async def test_real_ui_crypto_quote_amount_network_address_and_approval(real_shop):
     from test_ui import button, feed, rendered, setup_ui
 
@@ -261,6 +269,14 @@ async def test_real_ui_crypto_quote_amount_network_address_and_approval(real_sho
         await feed(dp, bot, "topup_method:crypto", callback=True)
         methods = [item.callback_data for row in rendered(session).reply_markup.inline_keyboard for item in row]
         assert set(f"crypto_asset:{asset}" for asset in ("BTC", "ETH", "USDC", "SOL", "LTC", "XMR")) <= set(methods)
+        await feed(dp, bot, "crypto_asset:LTC", callback=True)
+        assert "@monstal_owner" in rendered(session).text
+        assert "prywatnie" in rendered(session).text
+        assert "Adres odbiorcy" not in rendered(session).text
+        await feed(dp, bot, "crypto_asset:XMR", callback=True)
+        assert "@monstal_owner" in rendered(session).text
+        assert "prywatnie" in rendered(session).text
+        assert "Adres odbiorcy" not in rendered(session).text
         await feed(dp, bot, "crypto_asset:USDC", callback=True)
         await feed(dp, bot, "manual_amount:USDC:2500", callback=True)
         await feed(dp, bot, button(session, "manual_create:"), callback=True)

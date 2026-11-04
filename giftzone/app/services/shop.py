@@ -87,10 +87,15 @@ class ShopService:
             return self.balance_mode
 
     def crypto_options(self):
-        return [{"code": code, **metadata,
-                 "address": getattr(self.settings, metadata["setting"]),
-                 "configured": bool(getattr(self.settings, metadata["setting"]))}
-                for code, metadata in CRYPTO_ASSETS.items()]
+        options = []
+        for code, metadata in CRYPTO_ASSETS.items():
+            contact_only = not self.settings.demo_mode and code in {"LTC", "XMR"}
+            address = getattr(self.settings, metadata["setting"])
+            options.append({"code": code, **metadata,
+                            "address": None if contact_only else address,
+                            "contact_only": contact_only,
+                            "configured": False if contact_only else bool(address)})
+        return options
 
     @staticmethod
     def _utc(value):
@@ -316,6 +321,8 @@ class ShopService:
             raise DomainError("Wpłaty są niedostępne do czasu skonfigurowania administratora, który potwierdzi wpływ i uzna saldo.")
         if method not in {"blik", "crypto"}:
             raise DomainError("Wybierz metodę BLIK lub Crypto.")
+        if not self.settings.demo_mode and method == "crypto" and asset in {"LTC", "XMR"}:
+            raise DomainError(f"Wpłaty {asset} ustalaj prywatnie z właścicielem; bot nie tworzy dla nich zgłoszeń z adresem portfela.")
         if asset is not None and asset not in CRYPTO_ASSETS:
             raise DomainError("Nieobsługiwana kryptowaluta. Wybierz ją z menu.")
         if method == "blik" and asset is not None:

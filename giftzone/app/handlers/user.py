@@ -89,6 +89,12 @@ def create_user_router(service, settings) -> Router:
         ), markup)
 
     async def show_topup(event, topup):
+        if not demo and topup.method == 'crypto' and topup.asset in ('LTC', 'XMR'):
+            markup = keyboard([[('🔄 Sprawdź status', f'topup_status:{topup.id}')]])
+            contact_markup(markup)
+            text = title('🪙 WPŁATA ' + safe(topup.asset)) + 'Wpłaty w LTC i XMR są ustalane prywatnie. ' + (f'Napisz do <b>@{safe(settings.merchant_telegram_username)}</b>, podaj kwotę PLN i poczekaj na instrukcje. Nie wysyłaj środków na adres z wcześniejszej wyceny.' if settings.merchant_telegram_username else 'Prywatny kontakt właściciela nie jest jeszcze skonfigurowany.')
+            await render(event, text, markup)
+            return
         if not demo and settings.crypto_auto_rates and topup.method == 'crypto' and topup.status in ('awaiting_quote', 'awaiting_payment'):
             topup = await service.auto_quote_topup(event.from_user.id, topup.id, suppress_rate_error=True)
         rows = [[('🔄 Sprawdź status', f'topup_status:{topup.id}')]]
@@ -150,6 +156,16 @@ def create_user_router(service, settings) -> Router:
         await render(event, text + '\n\nSamo kliknięcie przycisku nie zwiększa salda.', markup)
 
     async def manual_amounts(event, instrument):
+        if not demo and instrument in ('LTC', 'XMR'):
+            markup = keyboard([])
+            contact_markup(markup)
+            text = title('🪙 WPŁATA ' + instrument)
+            if settings.merchant_telegram_username:
+                text += (f'Aby wpłacić w {instrument}, napisz prywatnie do <b>@{safe(settings.merchant_telegram_username)}</b>. Podaj kwotę w PLN i poczekaj na indywidualne instrukcje. Nie wysyłaj krypto na adres pokazany w innym zgłoszeniu.')
+            else:
+                text += f'Wpłaty w {instrument} obsługujemy wyłącznie prywatnie. Administrator nie ustawił jeszcze nicku kontaktowego; spróbuj później.'
+            await render(event, text, markup)
+            return
         if instrument == 'BLIK':
             text = contact_text()
             configured = bool(settings.merchant_telegram_username)
@@ -355,7 +371,7 @@ def create_user_router(service, settings) -> Router:
                 await manual_amounts(callback, 'BLIK')
             elif not demo:
                 options = service.crypto_options()
-                rows = [[(f'{o["code"]} · {o["name"]}' + ('' if o['configured'] else ' · niedostępne'), f'crypto_asset:{o["code"]}')] for o in options]
+                rows = [[(f'{o["code"]} · {o["name"]}' + (' · kontakt prywatny' if o.get('contact_only') else '' if o['configured'] else ' · niedostępne'), f'crypto_asset:{o["code"]}')] for o in options]
                 description = ('Wybierz walutę i kwotę PLN. Bot obliczy dokładną ilość krypto według kursu CoinGecko. Wpłatę sprawdza ręcznie administrator.'
                                if settings.crypto_auto_rates else 'Każda waluta ma osobną, określoną sieć. Przed wpłatą administrator ustala dokładną kwotę kryptowaluty dla wybranej kwoty PLN.')
                 await render(callback, title('🪙 WYBIERZ KRYPTOWALUTĘ') + description, keyboard(rows))

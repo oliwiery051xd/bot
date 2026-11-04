@@ -45,8 +45,6 @@ CRYPTO_BTC_ADDRESS=
 CRYPTO_ETH_ADDRESS=
 CRYPTO_USDC_ADDRESS=
 CRYPTO_SOL_ADDRESS=
-CRYPTO_LTC_ADDRESS=
-CRYPTO_XMR_ADDRESS=
 REFERRAL_BONUS_GROSZE=1000
 LOG_LEVEL=INFO
 ```
@@ -54,7 +52,7 @@ LOG_LEVEL=INFO
 Wszystko, co musisz podać, znajduje się w **jednym pliku `.env`**. Gotowy wzór
 to [.env.example](.env.example); w przygotowanym checkoutcie utworzono również
 pusty, ignorowany przez Git `.env` z uprawnieniami tylko dla właściciela.
-Na początku są token, Twoje liczbowe ID, nick kontaktowy i adresy odbiorcze.
+Na początku są token, Twoje liczbowe ID, nick kontaktowy i adresy odbiorcze BTC/ETH/USDC/SOL.
 Pozostałe ustawienia mają gotowe wartości. Bot nie prosi o prywatne klucze portfeli.
 
 - `BOT_TOKEN` uzyskaj od @BotFather. Nie publikuj go ani nie wysyłaj w czacie.
@@ -62,8 +60,9 @@ Pozostałe ustawienia mają gotowe wartości. Bot nie prosi o prywatne klucze po
   Własne ID odczytasz w profilu po `/start`, następnie zrestartuj bota po zmianie.
 - `MERCHANT_TELEGRAM_USERNAME`: Twój nick, z `@` lub bez. Możesz podać go później;
   bez nicku zgłoszenia BLIK są niedostępne.
-- Adresy krypto to wyłącznie publiczne adresy odbiorcze. Nigdy nie podawaj klucza
-  prywatnego, seed phrase ani hasła. Nieuzupełnione metody pozostają nieaktywne.
+- Adresy BTC/ETH/USDC/SOL to wyłącznie publiczne adresy odbiorcze. LTC i XMR są
+  ustalane wyłącznie prywatnie z właścicielem; bot nie pokazuje dla nich portfela.
+  Nigdy nie podawaj klucza prywatnego, seed phrase ani hasła.
 - Po zmianie konfiguracji uruchom proces ponownie. Bot nie domyśla się danych
   kontaktowych i nie generuje adresów portfeli.
 
@@ -76,7 +75,7 @@ python -m app.main
 ```
 
 Migracje są addytywne i zachowują dotychczasowe dane. Seed w trybie rzeczywistym
-inicjalizuje identyfikator trybu bazy, bez fikcyjnego katalogu. W DEMO dodaje
+inicjalizuje identyfikator trybu bazy i dodaje dwa nieaktywne przykładowe produkty. W DEMO dodaje
 idempotentnie sześć przykładowych kategorii i fikcyjne produkty.
 
 Aplikacja uruchamia long polling oraz ustawia nazwę wyświetlaną bota na
@@ -127,14 +126,17 @@ aby nie zaksięgować tej samej wpłaty dwiema różnymi operacjami.
 | Ethereum (ETH) | Ethereum mainnet | `CRYPTO_ETH_ADDRESS` |
 | USD Coin (USDC) | Ethereum mainnet / ERC-20 | `CRYPTO_USDC_ADDRESS` |
 | Solana (SOL) | Solana mainnet | `CRYPTO_SOL_ADDRESS` |
-| Litecoin (LTC) | Litecoin mainnet | `CRYPTO_LTC_ADDRESS` |
-| Monero (XMR) | Monero mainnet | `CRYPTO_XMR_ADDRESS` |
+| Litecoin (LTC) | kontakt prywatny z właścicielem | — |
+| Monero (XMR) | kontakt prywatny z właścicielem | — |
 
 USDC na Solanie, Base, Polygonie i innych sieciach nie jest obsługiwane w tej
 konfiguracji. Przed aktywacją osobiście sprawdź zgodność adresu i sieci oraz
 kontrolę nad portfelem; bot nie weryfikuje własności adresu w blockchainie.
 
-Przebieg:
+Dla LTC i XMR użytkownik nie tworzy zgłoszenia z adresem w bocie. Bot kieruje go
+do prywatnego kontaktu z właścicielem; dopiero tam ustalane są kwota i instrukcja.
+
+Przebieg automatycznej wpłaty BTC/ETH/USDC/SOL:
 
 1. Klient wybiera walutę i docelową kwotę salda w PLN. Powstaje zgłoszenie
    `awaiting_quote`. Wybór jest ograniczony do skonfigurowanych adresów.
@@ -154,7 +156,7 @@ Aktywnej wyceny nie można zmienić przed jej wygaśnięciem. Stary przycisk zg�
 przelewu nie zatwierdzi nowszej, innej wyceny. Gdy środki wysłano po terminie,
 klient powinien skontaktować się z właścicielem w celu ręcznego rozliczenia.
 Jako referencję krypto podaje się hash transakcji: 64 znaki szesnastkowe dla
-BTC/ETH/USDC/LTC/XMR (ETH i USDC mogą mieć prefiks `0x`), a dla SOL podpis Base58.
+BTC/ETH/USDC (ETH i USDC mogą mieć prefiks `0x`), a dla SOL podpis Base58.
 Sprawdzenie formatu hasha nie jest weryfikacją otrzymania pieniędzy.
 
 ### Automatyczne kursy — ustawienia w tym samym `.env`

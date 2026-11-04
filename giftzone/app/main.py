@@ -51,7 +51,7 @@ async def run() -> int:
         await service.ensure_mode()
         dp = Dispatcher(storage=MemoryStorage(), events_isolation=SimpleEventIsolation())
         dp.include_router(create_router(service, settings))
-        if not settings.demo_mode and settings.crypto_auto_rates and any(option['configured'] for option in service.crypto_options()):
+        if not settings.demo_mode and settings.crypto_auto_rates and any(option['configured'] and not option.get('contact_only') for option in service.crypto_options()):
             rate_task = asyncio.create_task(service.rate_cache.run(rate_stop), name='monstal-rates')
         # Polling is the implemented transport. HTTPS webhook server, signature
         # handling and real payment providers are intentionally not implemented.
